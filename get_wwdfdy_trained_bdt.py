@@ -25,13 +25,14 @@ def get_classifier(dataframe):
     bdt = HistGradientBoostingClassifier()
     classifier = bdt.fit(x_train, y_train, sample_weight=weight_train)
 
-    return classifier, feature_names
+    return classifier, feature_names, [x_train, x_test], [y_train, y_test]
 
-trained_model, feature_names = get_classifier(dataframe)
+trained_model, feature_names, trained_on, tested_on = get_classifier(dataframe)
 trained_bdt_info = {
     'Model': trained_model,
     'Features': feature_names,
-    'Trained On': dataframe
+    'Trained On': trained_on,
+    'Tested On': tested_on
 }
 
 from pickle import dump
