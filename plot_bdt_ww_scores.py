@@ -43,6 +43,12 @@ def parse_args():
         help="Threshold step for the significance scan. Defaults to 0.01.",
     )
     parser.add_argument(
+        "--cdf-step",
+        type=float,
+        default=0.001,
+        help="Threshold step for the cumulative efficiency curves. Defaults to 0.001.",
+    )
+    parser.add_argument(
         "--prefix",
         default=None,
         help="Prefix for output plot names. Defaults to the pickle filename stem.",
@@ -170,6 +176,58 @@ def plot_significance(thresholds, significances, best_cut, max_significance, out
     plt.close(fig)
 
 
+def calculate_selection_efficiencies(dataframe, thresholds):
+    efficiencies = {}
+
+    for process in ["ww", "dfdy", "ttbar"]:
+        process_data = dataframe[dataframe["Process"] == process]
+        total_weight = process_data["Weight"].sum()
+        if total_weight == 0:
+            raise ValueError(
+                f"Cannot calculate {process} efficiency because its weight sum is 0."
+            )
+
+        process_efficiencies = []
+        for threshold in thresholds:
+            passed_weight = process_data[process_data["ww_prob"] > threshold][
+                "Weight"
+            ].sum()
+            process_efficiencies.append(passed_weight / total_weight)
+
+        efficiencies[process] = process_efficiencies
+
+    return efficiencies
+
+
+def plot_cumulative_distribution(dataframe, thresholds, best_cut, output_path):
+    fig, ax = plt.subplots(figsize=(10, 8))
+    efficiencies = calculate_selection_efficiencies(dataframe, thresholds)
+
+    for process in ["ww", "dfdy", "ttbar"]:
+        ax.plot(
+            thresholds,
+            efficiencies[process],
+            linewidth=2.5,
+            label=PROCESS_LABELS[process],
+        )
+
+    ax.axvline(
+        best_cut,
+        linestyle="--",
+        color="black",
+        linewidth=2.5,
+        label=f"best cut ({best_cut:.2f})",
+    )
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.set_xlabel("WW Probability")
+    ax.set_ylabel("Selection Efficiency")
+    ax.legend()
+    fig.tight_layout()
+    fig.savefig(output_path, dpi=300)
+    plt.close(fig)
+
+
 def main():
     args = parse_args()
     pickle_file = Path(args.pickle_file)
@@ -179,6 +237,7 @@ def main():
     prefix = args.prefix if args.prefix else pickle_file.stem
     distribution_path = output_dir / f"{prefix}_ww_score_distribution.png"
     significance_path = output_dir / f"{prefix}_significance.png"
+    cdf_path = output_dir / f"{prefix}_ww_score_cdf.png"
 
     imported_bdt = load_bdt(pickle_file)
     classifier = imported_bdt["Model"]
@@ -205,6 +264,8 @@ def main():
     plot_significance(
         thresholds, significances, best_cut, max_significance, significance_path
     )
+    cdf_thresholds = np.arange(0, 1.0 + args.cdf_step, args.cdf_step)
+    plot_cumulative_distribution(results, cdf_thresholds, best_cut, cdf_path)
 
     print("\nBDT WW score summary")
     print("=" * len("BDT WW score summary"))
@@ -213,6 +274,7 @@ def main():
     print(f"Maximum S/sqrt(S+B): {max_significance:.4f}")
     print(f"Score distribution plot: {distribution_path}")
     print(f"Significance plot: {significance_path}")
+    print(f"Cumulative distribution plot: {cdf_path}")
 
 
 if __name__ == "__main__":
