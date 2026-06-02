@@ -61,7 +61,7 @@ def load_bdt(pickle_file):
             f"{pickle_file} is missing required key(s): {', '.join(sorted(missing_keys))}"
         )
 
-    return imported_bdt["Model"], imported_bdt["Features"]
+    return imported_bdt
 
 
 def get_ww_probability(classifier, dataframe, feature_names):
@@ -180,7 +180,9 @@ def main():
     distribution_path = output_dir / f"{prefix}_ww_score_distribution.png"
     significance_path = output_dir / f"{prefix}_significance.png"
 
-    classifier, feature_names = load_bdt(pickle_file)
+    imported_bdt = load_bdt(pickle_file)
+    classifier = imported_bdt["Model"]
+    feature_names = imported_bdt["Features"]
 
     required_columns = {"Process", "Weight"}
     missing_columns = required_columns - set(df_tot.columns)
@@ -192,6 +194,8 @@ def main():
 
     dataframe = df_tot[df_tot["Process"].isin(["ww", "dfdy", "ttbar"])]
     results = run_bdt(classifier, dataframe, feature_names)
+    # To score only the saved test dataframe instead of all df_tot, use:
+    # results = run_bdt(classifier, imported_bdt["Test Dataframe"], feature_names)
 
     best_cut, max_significance, thresholds, significances = calculate_significances(
         results, args.step
