@@ -1,7 +1,8 @@
 import uproot
 import pandas as pd
+import pdb
 
-path = './Data/'
+path = '../TupleSkimmer/'
 kinematic_keys = ["*_PT", "*_ETA", "*_PHI", "Delta*", "DiLepton*", "Scale Factor", "Reweight", "Weight"]
 
 trees = {'ww': uproot.open(path+"WW_MG5_NLO_wID.root:OS_MuE_Reco"),
@@ -14,8 +15,12 @@ data = {'ww': trees['ww'].arrays(filter_name=kinematic_keys, library='pd'),
 
 data['ww']['Process'], data['dfdy']['Process'], data['ttbar']['Process'] = 'ww', 'dfdy', 'ttbar'
 
-data['ttbar']['Weight']=data['ttbar']['Reweight']*data['ttbar']['Scale Factor']
-data['ttbar']=data['ttbar'].drop(['Reweight','Scale Factor'], axis=1)
+for process in ["ttbar", "ww"]:
+    data[process]['Weight']=data[process]['Reweight']*data[process]['Scale Factor']
+    data[process]=data[process].drop(['Reweight','Scale Factor'], axis=1)
 
-df_tot = pd.concat([data['ww'],data['dfdy'],data['ttbar']], 
-                   ignore_index=True).sample(frac=1).reset_index(drop=True)
+df_tot = pd.concat(
+    [data['ww'], data['dfdy'], data['ttbar']], 
+    ignore_index=True
+).sample(frac=1).reset_index(drop=True)
+
