@@ -149,7 +149,7 @@ def plot_score_distribution(dataframe, best_cut, bins, output_path):
         linewidth=2.5,
         label=f"best cut ({best_cut:.2f})",
     )
-    ax.set_xlabel("WW Probability")
+    ax.set_xlabel("Signal Process BDT Score")
     ax.set_ylabel("Fractional Counts")
     ax.legend()
     fig.tight_layout()
@@ -168,7 +168,7 @@ def plot_significance(thresholds, significances, best_cut, max_significance, out
         label=f"best cut ({best_cut:.2f})",
     )
     ax.scatter([best_cut], [max_significance], color="red", zorder=3)
-    ax.set_xlabel("WW Probability Cut")
+    ax.set_xlabel("Signal Process BDT Score Selection")
     ax.set_ylabel(r"$S/\sqrt{S+B}$")
     ax.legend()
     fig.tight_layout()
@@ -220,7 +220,7 @@ def plot_cumulative_distribution(dataframe, thresholds, best_cut, output_path):
     )
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
-    ax.set_xlabel("WW Probability")
+    ax.set_xlabel("Signal Process BDT Score Selection")
     ax.set_ylabel("Selection Efficiency")
     ax.legend()
     fig.tight_layout()
