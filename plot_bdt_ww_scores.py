@@ -122,14 +122,17 @@ def plot_score_distribution(dataframe, best_cut, bins, output_path):
 
     for process in ["ww", "dfdy", "ttbar"]:
         process_data = dataframe[dataframe["Process"] == process]
+        weight_sum = process_data["Weight"].sum()
+        if weight_sum == 0:
+            raise ValueError(f"Cannot normalize {process} histogram because its weight sum is 0.")
+
         ax.hist(
             process_data["ww_prob"],
             bins=bins,
             range=(0, 1),
-            weights=process_data["Weight"],
+            weights=process_data["Weight"] / weight_sum,
             histtype="step",
             linewidth=2.5,
-            density=True,
             label=PROCESS_LABELS[process],
         )
 
